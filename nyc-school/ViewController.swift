@@ -18,6 +18,14 @@ class ViewController: UIViewController {
         }
     }
     
+    var scores: [Score] = [] {
+        didSet {
+            DispatchQueue.main.async {
+                self.tableView.reloadData()
+            }
+        }
+    }
+    
     let detailViewController = DetailViewController()
     var subscriptions = Set<AnyCancellable>()
     lazy var tableView: UITableView = {
@@ -35,8 +43,17 @@ class ViewController: UIViewController {
             case .failure(let e): print(e.localizedDescription)
             case .finished: print("finished")
             }
-        } receiveValue: { [weak self]schools in
+        } receiveValue: { [weak self] schools in
             self?.schools = schools
+        }.store(in: &subscriptions)
+        
+        Service.shared.fetchScores().sink { complete in
+            switch (complete) {
+            case .failure(let e): print(e.localizedDescription)
+            case .finished: print("finished")
+            }
+        } receiveValue: { [weak self] scores in
+            self?.scores = scores
         }.store(in: &subscriptions)
     }
 
